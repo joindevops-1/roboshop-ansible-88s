@@ -64,7 +64,7 @@
       record: "{{ item }}-{{ env }}.{{ domain_name }}"
       type: A
       ttl: 1
-      value: "{{ item[0].public_ip_address }}"
+      value: "dummy"
     loop: "{{ instances }}"
     when: action == "destroy"
 
