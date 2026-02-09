@@ -61,11 +61,11 @@
     amazon.aws.route53:
       state: absent
       zone: "{{ domain_name }}"
-      record: "roboshop-{{ env }}.{{ domain_name }}"
+      record: "{{ item }}-{{ env }}.{{ domain_name }}"
       type: A
       ttl: 1
-      value: "{{ item.instances[0].public_ip_address }}"
-    loop: "{{ ec2_output.results }}"
+      value: "{{ item[0].public_ip_address }}"
+    loop: "{{ instances }}"
     when: action == "destroy"
 
   - name: destroy ec2 instances
