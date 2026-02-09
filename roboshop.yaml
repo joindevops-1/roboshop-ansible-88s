@@ -6,11 +6,13 @@
     sg_id: sg-07c8acf3fa6b923fa
     zone_id: Z05013202FKF0ZL12WAOP
     domain_name: daws88s.online
+    action: create
     env: dev
     instances:
     - mongodb
     - catalogue
   tasks:
+  ### Create Flow ###
   - name: create ec2 instance
     amazon.aws.ec2_instance:
       name: "{{ item }}-{{ env }}"
@@ -24,6 +26,7 @@
         Environment: "{{ env }}"
     loop: "{{ instances }}"
     register: ec2_output
+    when: action == "create"
 
   - name: print output
     ansible.builtin.debug:
@@ -38,6 +41,7 @@
       ttl: 1
       value: "{{ item.instances[0].private_ip_address }}"
     loop: "{{ ec2_output.results }}"
+    when: action == "create"
 
   - name: create r53 records
     amazon.aws.route53:
@@ -48,7 +52,37 @@
       ttl: 1
       value: "{{ item.instances[0].public_ip_address }}"
     loop: "{{ ec2_output.results }}"
-    when: item.item == "frontend"
+    when: 
+    - item.item == "frontend"
+    - action == "create"
+
+  ### Destroy Flow ###
+  - name: destroy r53 records
+    amazon.aws.route53:
+      state: absent
+      zone: "{{ domain_name }}"
+      record: "roboshop-{{ env }}.{{ domain_name }}"
+      type: A
+      ttl: 1
+      value: "{{ item.instances[0].public_ip_address }}"
+    loop: "{{ ec2_output.results }}"
+    when: action == "destroy"
+
+  - name: destroy ec2 instances
+    amazon.aws.ec2_instance:
+      name: "{{ item }}-{{ env }}"
+      instance_type: t3.micro
+      security_group: "{{ sg_id }}"
+      image_id: "{{ ami_id }}"
+      tags:
+        Name: "{{ item }}-{{ env }}"
+        Project: "roboshop"
+        Component: "{{ item }}"
+        Environment: "{{ env }}"
+    loop: "{{ instances }}"
+    register: ec2_output
+    when: action == "destroy"
+    
     
 
       
