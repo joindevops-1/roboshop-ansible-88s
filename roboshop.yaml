@@ -1,0 +1,27 @@
+- name: create EC2 and R53 records
+  hosts: local
+  connection: local
+  vars:
+    ami_id: ami-0220d79f3f480ecf5
+    sg_id: sg-07c8acf3fa6b923fa
+    zone_id: Z05013202FKF0ZL12WAOP
+    domain_name: daws88s.online
+    env: dev
+    instances:
+    - mongodb
+    - catalogue
+  tasks:
+  - name: create ec2 instance
+    amazon.aws.ec2_instance:
+      name: "{{ item }}-{{ env }}"
+      instance_type: t3.micro
+      security_group: "{{ sg_id }}"
+      image_id: "{{ ami_id }}"
+      tags:
+        Name: "{{ item }}-{{ env }}"
+        Project: "roboshop"
+        Component: "{{ item }}"
+        Environment: "{{ env }}"
+    loop: "{{ instances }}"
+
+      
